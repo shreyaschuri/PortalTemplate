@@ -2,7 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import { Card, CardBody, Image } from "@nextui-org/react";
+import PageWrapper from "@/components/PageWrapper";
 
 const Globe = dynamic(() => import("react-globe.gl"), { ssr: false });
 
@@ -52,19 +53,19 @@ const locations: Location[] = [
 
 export default function LocationsPage() {
   const globeRef = useRef<any>(null);
-  const refs: Record<string, React.RefObject<HTMLDivElement | null>> = {};
+  const cardRefs: Record<string, React.RefObject<HTMLDivElement | null>> = {};
   locations.forEach((loc) => {
-    refs[loc.id] = useRef<HTMLDivElement | null>(null);
+    cardRefs[loc.id] = useRef<HTMLDivElement | null>(null);
   });
 
   const scrollToCard = (id: string) => {
-    refs[id]?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    cardRefs[id]?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+  
 
-  // Enable auto-rotate
+  // Enable auto-rotation
   useEffect(() => {
     let rafId: number | null = null;
-
     const enableAutoRotate = () => {
       const controls = globeRef.current?.controls?.();
       if (controls) {
@@ -73,47 +74,32 @@ export default function LocationsPage() {
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.update?.();
-
-        const pause = () => (controls.autoRotate = false);
-        const resume = () => (controls.autoRotate = true);
-        controls.removeEventListener?.("start", pause);
-        controls.removeEventListener?.("end", resume);
-        controls.addEventListener?.("start", pause);
-        controls.addEventListener?.("end", resume);
       } else {
         rafId = requestAnimationFrame(enableAutoRotate);
       }
     };
-
     enableAutoRotate();
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
-  // Focus camera + scroll
+  // Focus on marker + scroll
   const focusOnLocation = (loc: Location) => {
     globeRef.current?.pointOfView(
       { lat: loc.lat, lng: loc.lng, altitude: 1.5 },
-      1000 // 1s animation
+      1000
     );
     setTimeout(() => scrollToCard(loc.id), 1200);
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12">
-      {/* Heading */}
-      <motion.h2
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="text-4xl font-bold text-blue-700 text-center"
-      >
-        Company Locations
-      </motion.h2>
+    <PageWrapper>
+    <div className="max-w-7xl mx-auto px-6 py-10 space-y-10">
+      <h2 className="text-3xl font-bold">Company Locations</h2>
 
-      {/* Globe */}
-      <div className="relative w-full h-[500px] bg-black rounded-2xl overflow-hidden shadow-lg">
+      {/* Globe with glowing pins */}
+      <div className="relative w-full h-[500px] bg-black rounded-lg glass overflow-hidden">
         <Globe
           ref={globeRef}
           globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
@@ -131,8 +117,8 @@ export default function LocationsPage() {
             container.style.transform = "translate(-50%, -50%)";
             container.style.cursor = "pointer";
             container.style.pointerEvents = "auto";
-            container.style.zIndex = "1000";
 
+            // Pulse glow
             const pulse = document.createElement("div");
             pulse.style.width = "100%";
             pulse.style.height = "100%";
@@ -141,6 +127,7 @@ export default function LocationsPage() {
             pulse.style.boxShadow = "0 0 15px rgba(255, 99, 132, 0.9)";
             pulse.style.animation = "ping 1.5s infinite";
 
+            // Solid dot
             const dot = document.createElement("div");
             dot.style.position = "absolute";
             dot.style.top = "4px";
@@ -151,6 +138,7 @@ export default function LocationsPage() {
             dot.style.background = "#ff3860";
             dot.style.boxShadow = "0 0 6px #ff3860";
 
+            // Tooltip
             const tooltip = document.createElement("div");
             tooltip.innerText = `${loc.city}, ${loc.country}`;
             tooltip.style.position = "absolute";
@@ -169,36 +157,35 @@ export default function LocationsPage() {
 
             container.onmouseenter = () => (tooltip.style.opacity = "1");
             container.onmouseleave = () => (tooltip.style.opacity = "0");
-
             container.onclick = () => focusOnLocation(loc);
 
             container.appendChild(pulse);
             container.appendChild(dot);
             container.appendChild(tooltip);
+
             return container;
           }}
         />
       </div>
 
-      {/* Location Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Location cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {locations.map((loc) => (
-          <motion.div
-            key={loc.id}
-            ref={refs[loc.id]}
-            whileHover={{ scale: 1.02 }}
-            className="card overflow-hidden"
-          >
-            <img
-              src={loc.image}
-              alt={loc.city}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-6">
-              <h3 className="text-2xl font-bold">{loc.city}</h3>
-              <p className="text-gray-600">{loc.country}</p>
-            </div>
-          </motion.div>
+          <div key={loc.id} ref={cardRefs[loc.id]}>
+            <Card shadow="sm"className="glass-card">
+              <Image
+                src={loc.image}
+                alt={loc.city}
+                height={200}
+                width={400}
+                className="object-cover w-full"
+              />
+              <CardBody>
+                <h3 className="text-xl font-semibold">{loc.city}</h3>
+                <p className="text-default-500">{loc.country}</p>
+              </CardBody>
+            </Card>
+          </div>
         ))}
       </div>
 
@@ -219,5 +206,6 @@ export default function LocationsPage() {
         }
       `}</style>
     </div>
+    </PageWrapper>
   );
 }

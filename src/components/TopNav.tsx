@@ -1,129 +1,65 @@
 "use client";
-
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Input } from "@nextui-org/react";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { SearchIcon, MoonIcon, SunIcon } from "lucide-react";
+import { useTheme } from "next-themes";
+import { color } from "framer-motion";
+import Image from "next/image";
 
 export default function TopNav() {
-  const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [query, setQuery] = useState("");
 
-  const links = [
-    { name: "Home", href: "/" },
-    { name: "Employees", href: "/employees" },
-    { name: "History", href: "/history" },
-    { name: "Locations", href: "/locations" },
-    { name: "Policies", href: "/policies" },
-  ];
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(query)}`;
+    }
+  };
 
   return (
-    <nav className="bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="Company Logo"
-              width={36}
-              height={36}
-              className="rounded-md"
-            />
-            <span className="text-lg font-semibold text-[color:var(--color-primary)]">
-              Intranet Portal
-            </span>
-          </Link>
-        </div>
+    <Navbar maxWidth="2xl" className="glass border-b border-indigo-500/20">
+      <NavbarBrand className="gap-2">
+        <div className="bg-blue-800 p-1 ">
+      <Image
+        src="/Logo/logo.png"
+        alt="logo"
+        width={1000}   // exact pixel width
+        height={80}  // exact pixel height
+        className="h-14 w-auto object-contain"
+        priority     // loads faster (important for navbar logos)
+      />
+    </div>
+        {/* <p className="font-semibold text-primary">Intranet Portal</p> */}
+      </NavbarBrand>
 
-        {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-6 text-sm">
-          {links.map((link) => {
-            const isActive =
-              link.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(link.href);
+      {/* Global search */}
+      <form onSubmit={handleSearch} className="flex-1 px-6 hidden md:block">
+        <Input
+          size="sm"
+          variant="bordered"
+          placeholder="Search employees, policies, announcements..."
+          startContent={<SearchIcon size={16} />}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full"
+        />
+      </form>
 
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`font-medium transition ${
-                  isActive
-                    ? "text-[color:var(--color-primary)] border-b-2 border-[color:var(--color-primary)] pb-1"
-                    : "hover:text-[color:var(--color-primary)] text-slate-700"
-                }`}
-              >
-                {link.name}
-              </Link>
-            );
-          })}
-        </div>
+      <NavbarContent justify="end" className="gap-6 items-center">
+        <NavbarItem><Link href="/employees">Employees</Link></NavbarItem>
+        <NavbarItem><Link href="/history">History</Link></NavbarItem>
+        <NavbarItem><Link href="/locations">Locations</Link></NavbarItem>
+        <NavbarItem><Link href="/policies">Policies</Link></NavbarItem>
 
-        {/* Mobile Menu Button */}
+        {/* Dark/Light toggle */}
         <button
-          className="md:hidden text-slate-700 hover:text-[color:var(--color-primary)]"
-          onClick={() => setMenuOpen(true)}
+          className="p-2 rounded-full hover:bg-slate-700/30"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
-          <Menu size={28} />
+          {theme === "dark" ? <SunIcon size={18} /> : <MoonIcon size={18} />}
         </button>
-      </div>
-
-      {/* Mobile Slide-over Menu */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "tween", duration: 0.3 }}
-            className="fixed inset-0 z-50"
-          >
-            {/* Solid white panel (full height, from right) */}
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "tween", duration: 0.3 }}
-              className="absolute top-0 right-0 w-64 h-full bg-white shadow-xl flex flex-col"
-            >
-              <div className="flex justify-between items-center p-4 border-b border-slate-200">
-                <span className="text-lg font-semibold text-[color:var(--color-primary)]">
-                  Menu
-                </span>
-                <button onClick={() => setMenuOpen(false)}>
-                  <X size={24} />
-                </button>
-              </div>
-              <div className="flex flex-col p-4 gap-4">
-                {links.map((link) => {
-                  const isActive =
-                    link.href === "/"
-                      ? pathname === "/"
-                      : pathname.startsWith(link.href);
-
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMenuOpen(false)}
-                      className={`font-medium transition ${
-                        isActive
-                          ? "text-[color:var(--color-primary)]"
-                          : "hover:text-[color:var(--color-primary)] text-slate-700"
-                      }`}
-                    >
-                      {link.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </nav>
+      </NavbarContent>
+    </Navbar>
   );
 }

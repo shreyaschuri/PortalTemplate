@@ -1,6 +1,6 @@
 "use client";
-
-import { motion } from "framer-motion";
+import PageWrapper from "@/components/PageWrapper";
+import { Card, CardBody, Image, User } from "@nextui-org/react";
 
 const employees = [
   { name: "John Doe", role: "Software Engineer", image: "/employees/john.jpg" },
@@ -10,35 +10,23 @@ const employees = [
 
 export default function EmployeesPage() {
   return (
-    <div className="max-w-7xl mx-auto space-y-12">
-      <motion.h2
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="text-4xl font-bold text-blue-700 text-center"
-      >
-        Employee Directory
-      </motion.h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+    <PageWrapper>
+      <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+      <h2 className="text-3xl font-bold">Employee Directory</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {employees.map((emp, i) => (
-          <motion.div
-            key={i}
-            whileHover={{ scale: 1.05 }}
-            className="card overflow-hidden text-center"
-          >
-            <img
-              src={emp.image}
-              alt={emp.name}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-6">
-              <h3 className="text-xl font-bold">{emp.name}</h3>
-              <p className="text-gray-600">{emp.role}</p>
-            </div>
-          </motion.div>
+          <Card key={i} shadow="sm" className="glass-card">
+            <CardBody>
+              <User
+                name={emp.name}
+                description={emp.role}
+                avatarProps={{ src: emp.image }}
+              />
+            </CardBody>
+          </Card>
         ))}
       </div>
-    </div>
+    </div></PageWrapper>
+    
   );
 }
