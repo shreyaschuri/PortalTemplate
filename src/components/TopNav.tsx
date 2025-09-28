@@ -21,14 +21,17 @@ export default function TopNav() {
     <Navbar maxWidth="2xl" className="glass border-b border-indigo-500/20">
       <NavbarBrand className="gap-2">
         <div className="bg-blue-800 p-1 ">
-      <Image
+          <Link href="/">
+          <Image
         src="/Logo/logo.png"
         alt="logo"
-        width={1000}   // exact pixel width
+        width={80}   // exact pixel width
         height={80}  // exact pixel height
-        className="h-14 w-auto object-contain"
+        className="h-13 w-auto object-contain"
         priority     // loads faster (important for navbar logos)
       />
+          </Link>
+      
     </div>
         {/* <p className="font-semibold text-primary">Intranet Portal</p> */}
       </NavbarBrand>
