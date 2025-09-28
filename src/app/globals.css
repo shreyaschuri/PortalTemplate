@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0b1220;            /* deep navy (page background optional) */
+  --color-surface: #ffffff;       /* card surface */
+  --color-text: #0f172a;          /* slate-900 */
+  --color-muted: #475569;         /* slate-600 */
+  --color-primary: #4f46e5;       /* indigo-600 */
+  --color-primary-700: #4338ca;   /* indigo-700 */
+  --radius-card: 16px;
+}
+
+body {
+  background: #f1f5f9; /* slate-100 */
+  color: var(--color-text);
+  font-synthesis-weight: none;
+}
+
+.card {
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 16px rgb(2 6 23 / 6%);
+  background: var(--color-surface);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgb(2 6 23 / 10%);
+}
