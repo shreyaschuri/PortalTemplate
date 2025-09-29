@@ -1,36 +1,84 @@
 "use client";
-import PageWrapper from "@/components/PageWrapper";
-import { Card, CardBody, CardHeader, CardFooter, Image, Link } from "@nextui-org/react";
+import { useEffect, useState } from "react";
+import { Card, CardBody, Button } from "@nextui-org/react";
+import { FileText, Eye } from "lucide-react";
+import Link from "next/link";
 
-const NEWS = [
-  { slug:"q3-results", title:"Q3 Results Beat Expectations", date:"Sep 25, 2025", excerpt:"Revenue grew 18% YoY...", imageSrc:"/news/q3.jpg" },
-  { slug:"hr-policy-update", title:"New HR Policy Update", date:"Sep 20, 2025", excerpt:"Flexible Fridays & leave...", imageSrc:"/news/hr.jpg" },
-  { slug:"renovation-complete", title:"Mumbai HQ Renovation Complete", date:"Sep 15, 2025", excerpt:"12th floor hub...", imageSrc:"/news/reno.jpg" },
-];
+type Announcement = {
+  id: string;
+  title: string;
+  shortDesc: string;
+  fullDesc?: string;
+  imageUrl?: string;
+  fileUrl?: string;
+  publishedAt: string;
+  isActive: boolean;
+};
 
 export default function AnnouncementsPage() {
-  return (
-    <PageWrapper>
+  const [list, setList] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    
-    <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
-      <h1 className="text-3xl font-bold">Announcements</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {NEWS.map((n) => (
-          <Card key={n.slug} shadow="sm" isPressable as={Link} href={`/announcements/${n.slug}`}>
-            <CardHeader className="p-0">
-              <Image src={n.imageSrc} alt={n.title} width={400} height={200} className="h-40 object-cover"/>
-            </CardHeader>
-            <CardBody>
-              <p className="text-xs text-default-500">{n.date}</p>
-              <h3 className="font-semibold mt-1">{n.title}</h3>
-              <p className="text-sm text-default-600 mt-1">{n.excerpt}</p>
+  // fetch dynamic announcements
+  useEffect(() => {
+    const load = async () => {
+      const res = await fetch("/api/announcements");
+      const data = await res.json();
+      setList(data.filter((a: Announcement) => a.isActive));
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  if (loading) return <p className="px-6 py-10">Loading announcements...</p>;
+
+  return (
+    <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+      <h2 className="text-3xl font-bold">Company Announcements</h2>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {list.map((a) => (
+          <Card key={a.id} shadow="sm" className="glass-card">
+            <CardBody className="space-y-3">
+              <h3 className="text-xl font-semibold">{a.title}</h3>
+              <p className="text-default-500">{a.shortDesc}</p>
+
+              {a.imageUrl && (
+                <img
+                  src={a.imageUrl}
+                  alt={a.title}
+                  className="rounded-lg h-40 w-full object-cover"
+                />
+              )}
+
+              <div className="flex gap-3 mt-3">
+                <Button
+                  as={Link}
+                  href={`/announcements/${a.id}`}
+                  color="primary"
+                  variant="flat"
+                  startContent={<Eye size={16} />}
+                  size="sm"
+                >
+                  View
+                </Button>
+                {a.fileUrl && (
+                  <a href={a.fileUrl} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      color="secondary"
+                      variant="flat"
+                      startContent={<FileText size={16} />}
+                      size="sm"
+                    >
+                      PDF
+                    </Button>
+                  </a>
+                )}
+              </div>
             </CardBody>
-            <CardFooter className="text-primary">Read more →</CardFooter>
           </Card>
         ))}
       </div>
     </div>
-    </PageWrapper>
   );
 }

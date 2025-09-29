@@ -1,11 +1,8 @@
 "use client";
-
-import dynamic from "next/dynamic";
-import { useRef, useEffect } from "react";
-import { Card, CardBody, Image } from "@nextui-org/react";
-import PageWrapper from "@/components/PageWrapper";
-
-const Globe = dynamic(() => import("react-globe.gl"), { ssr: false });
+import { useEffect, useRef, useState } from "react";
+import Globe, { GlobeMethods } from "react-globe.gl";
+import { Card, CardBody, Button } from "@nextui-org/react";
+import Link from "next/link";
 
 type Location = {
   id: string;
@@ -13,199 +10,114 @@ type Location = {
   country: string;
   lat: number;
   lng: number;
-  image: string;
+  imageUrl?: string;
+  description?: string;
 };
 
-const locations: Location[] = [
-  {
-    id: "newyork",
-    city: "New York",
-    country: "USA",
-    lat: 40.7128,
-    lng: -74.006,
-    image: "/locations/newyork.jpg",
-  },
-  {
-    id: "london",
-    city: "London",
-    country: "UK",
-    lat: 51.5072,
-    lng: -0.1276,
-    image: "/locations/london.jpg",
-  },
-  {
-    id: "mumbai",
-    city: "Mumbai",
-    country: "India",
-    lat: 19.076,
-    lng: 72.8777,
-    image: "/locations/mumbai.jpg",
-  },
-  {
-    id: "tokyo",
-    city: "Tokyo",
-    country: "Japan",
-    lat: 35.6895,
-    lng: 139.6917,
-    image: "/locations/tokyo.jpg",
-  },
-];
-
 export default function LocationsPage() {
-  const globeRef = useRef<any>(null);
-  const cardRefs: Record<string, React.RefObject<HTMLDivElement | null>> = {};
-  locations.forEach((loc) => {
-    cardRefs[loc.id] = useRef<HTMLDivElement | null>(null);
-  });
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
+  const globeRef = useRef<GlobeMethods | undefined>(undefined);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const scrollToCard = (id: string) => {
-    cardRefs[id]?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-  
-
-  // Enable auto-rotation
   useEffect(() => {
-    let rafId: number | null = null;
-    const enableAutoRotate = () => {
-      const controls = globeRef.current?.controls?.();
+    const load = async () => {
+      const res = await fetch("/api/locations");
+      const data = await res.json();
+      setLocations(data);
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    if (globeRef.current) {
+      const controls = globeRef.current.controls();
       if (controls) {
         controls.autoRotate = true;
         controls.autoRotateSpeed = 0.6;
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.update?.();
-      } else {
-        rafId = requestAnimationFrame(enableAutoRotate);
       }
-    };
-    enableAutoRotate();
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, []);
+    }
+  }, [loading]);
 
-  // Focus on marker + scroll
-  const focusOnLocation = (loc: Location) => {
-    globeRef.current?.pointOfView(
-      { lat: loc.lat, lng: loc.lng, altitude: 1.5 },
-      1000
-    );
-    setTimeout(() => scrollToCard(loc.id), 1200);
+  const handleLocationClick = (loc: Location) => {
+    if (globeRef.current) {
+      globeRef.current.pointOfView(
+        { lat: loc.lat, lng: loc.lng, altitude: 1.5 },
+        1500
+      );
+    }
+
+    const el = cardRefs.current[loc.id];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
+  if (loading) return <p className="px-6 py-10">Loading locations...</p>;
+
   return (
-    <PageWrapper>
-    <div className="max-w-7xl mx-auto px-6 py-10 space-y-10">
-      <h2 className="text-3xl font-bold">Company Locations</h2>
+    <div className="max-w-6xl mx-auto px-6 py-12 space-y-12">
+      <h2 className="text-3xl font-bold mb-6">Our Global Offices</h2>
 
-      {/* Globe with glowing pins */}
-      <div className="relative w-full h-[500px] bg-black rounded-lg glass overflow-hidden">
-        <Globe
-          ref={globeRef}
-          globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-          bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-          htmlElementsData={locations}
-          htmlLat={(d) => (d as Location).lat}
-          htmlLng={(d) => (d as Location).lng}
-          htmlElement={(d) => {
-            const loc = d as Location;
-
-            const container = document.createElement("div");
-            container.style.position = "relative";
-            container.style.width = "20px";
-            container.style.height = "20px";
-            container.style.transform = "translate(-50%, -50%)";
-            container.style.cursor = "pointer";
-            container.style.pointerEvents = "auto";
-
-            // Pulse glow
-            const pulse = document.createElement("div");
-            pulse.style.width = "100%";
-            pulse.style.height = "100%";
-            pulse.style.borderRadius = "50%";
-            pulse.style.background = "rgba(255, 99, 132, 0.6)";
-            pulse.style.boxShadow = "0 0 15px rgba(255, 99, 132, 0.9)";
-            pulse.style.animation = "ping 1.5s infinite";
-
-            // Solid dot
-            const dot = document.createElement("div");
-            dot.style.position = "absolute";
-            dot.style.top = "4px";
-            dot.style.left = "4px";
-            dot.style.width = "12px";
-            dot.style.height = "12px";
-            dot.style.borderRadius = "50%";
-            dot.style.background = "#ff3860";
-            dot.style.boxShadow = "0 0 6px #ff3860";
-
-            // Tooltip
-            const tooltip = document.createElement("div");
-            tooltip.innerText = `${loc.city}, ${loc.country}`;
-            tooltip.style.position = "absolute";
-            tooltip.style.bottom = "28px";
-            tooltip.style.left = "50%";
-            tooltip.style.transform = "translateX(-50%)";
-            tooltip.style.background = "rgba(0,0,0,0.75)";
-            tooltip.style.color = "white";
-            tooltip.style.padding = "4px 8px";
-            tooltip.style.borderRadius = "6px";
-            tooltip.style.fontSize = "12px";
-            tooltip.style.whiteSpace = "nowrap";
-            tooltip.style.opacity = "0";
-            tooltip.style.transition = "opacity 0.3s";
-            tooltip.style.pointerEvents = "none";
-
-            container.onmouseenter = () => (tooltip.style.opacity = "1");
-            container.onmouseleave = () => (tooltip.style.opacity = "0");
-            container.onclick = () => focusOnLocation(loc);
-
-            container.appendChild(pulse);
-            container.appendChild(dot);
-            container.appendChild(tooltip);
-
-            return container;
-          }}
-        />
+      {/* Globe */}
+      <div className="relative flex justify-center items-center bg-slate-900 rounded-xl shadow-lg overflow-hidden">
+        <div className="w-full h-[500px]">
+          <Globe
+            ref={globeRef}
+            globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+            bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+            backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+            labelsData={locations}
+            labelLat={(d: any) => d.lat}
+            labelLng={(d: any) => d.lng}
+            labelText={(d: any) => d.city}
+            labelSize={2.5}
+            labelColor={() => "rgba(255,255,255,0.9)"}
+            labelDotRadius={1.5}
+            onLabelClick={(d: any) => handleLocationClick(d as Location)}
+            animateIn={true}
+          />
+        </div>
       </div>
 
-      {/* Location cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Cards */}
+      <div className="grid gap-8 md:grid-cols-2">
         {locations.map((loc) => (
-          <div key={loc.id} ref={cardRefs[loc.id]}>
-            <Card shadow="sm"className="glass-card">
-              <Image
-                src={loc.image}
-                alt={loc.city}
-                height={200}
-                width={400}
-                className="object-cover w-full"
-              />
-              <CardBody>
-                <h3 className="text-xl font-semibold">{loc.city}</h3>
-                <p className="text-default-500">{loc.country}</p>
-              </CardBody>
-            </Card>
-          </div>
+          <Card
+            key={loc.id}
+            shadow="sm"
+            className="glass-card"
+            ref={(el) => {
+              cardRefs.current[loc.id] = el;
+            }}
+          >
+            <CardBody className="space-y-3">
+              <h3 className="text-xl font-semibold">
+                {loc.city}, {loc.country}
+              </h3>
+
+              {loc.imageUrl && (
+                <img
+                  src={loc.imageUrl}
+                  alt={loc.city}
+                  className="rounded-lg mt-3 h-40 w-full object-cover"
+                />
+              )}
+
+              <Button
+                as={Link}
+                href={`/locations/${loc.id}`}
+                size="sm"
+                variant="flat"
+                color="primary"
+              >
+                View Details
+              </Button>
+            </CardBody>
+          </Card>
         ))}
       </div>
-
-      {/* Pulse animation */}
-      <style jsx global>{`
-        @keyframes ping {
-          0% {
-            transform: scale(0.9);
-            opacity: 0.8;
-          }
-          70% {
-            transform: scale(1.5);
-            opacity: 0;
-          }
-          100% {
-            opacity: 0;
-          }
-        }
-      `}</style>
     </div>
-    </PageWrapper>
   );
 }
