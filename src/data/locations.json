@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "31f84e2e-4bfb-4868-8e25-7e9dfc8d5aa0",
+    "city": "Mumbai",
+    "country": "India",
+    "lat": 19.16184135383926,
+    "lng": 72.85613434417931,
+    "description": "",
+    "imageUrl": "/uploads/locations/images/cello_triumph.jpg"
+  },
+  {
+    "id": "a9027d0c-b424-4426-aed3-e209747fda82",
+    "city": "Hamburg",
+    "country": "Germany",
+    "lat": 53.55612173293138,
+    "lng": 9.983603286507584,
+    "description": "",
+    "imageUrl": "/uploads/locations/images/headergermany.jpg"
+  }
+]

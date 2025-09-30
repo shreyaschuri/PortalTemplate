@@ -1,0 +1,27 @@
+# Stage 1: Builder
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Copy lock files first (better caching)
+COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+
+RUN npm install --frozen-lockfile
+
+COPY . .
+RUN npm run build
+
+# Stage 2: Runner
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/src/data ./src/data
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+EXPOSE 3000
+CMD ["npm", "start"]
